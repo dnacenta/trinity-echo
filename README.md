@@ -189,6 +189,10 @@ Use an HTTP Request node in n8n to POST to `/api/call`. Set the bearer token in 
 
 For personal use with a few calls a day, the running cost is minimal beyond the Twilio number.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit conventions, and workflow.
+
 ## License
 
 [GPL-3.0](LICENSE)
