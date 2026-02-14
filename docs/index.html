@@ -146,9 +146,19 @@
     .hero .tagline {
       font-size: clamp(18px, 2.5vw, 22px);
       color: var(--text-dim);
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       font-weight: 400;
     }
+
+    .hero-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .hero-badges img { height: 20px; }
 
     .hero .desc {
       font-size: 15px;
@@ -541,6 +551,12 @@
       </div>
       <h1>morpheus<span>-</span>line</h1>
       <p class="tagline">Talk to Claude. Over the phone.</p>
+      <div class="hero-badges">
+        <a href="https://github.com/dnacenta/morpheus-line/actions/workflows/ci.yml" target="_blank" rel="noopener"><img src="https://github.com/dnacenta/morpheus-line/actions/workflows/ci.yml/badge.svg?branch=development" alt="CI"></a>
+        <a href="https://github.com/dnacenta/morpheus-line/blob/development/LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/dnacenta/morpheus-line" alt="License"></a>
+        <a href="https://github.com/dnacenta/morpheus-line/tags" target="_blank" rel="noopener"><img src="https://img.shields.io/github/v/tag/dnacenta/morpheus-line?label=version&amp;color=green" alt="Version"></a>
+        <img src="https://img.shields.io/badge/rust-1.75%2B-orange" alt="Rust">
+      </div>
       <p class="desc">
         Voice interface that connects phone calls to Claude Code CLI.
         Call in or trigger outbound calls from your automation workflows.
