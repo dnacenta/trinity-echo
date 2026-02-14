@@ -23,6 +23,7 @@ voice_id = "JAgnJveGGUh4qy4kh6dF"
 [claude]
 # Uses `claude` CLI from PATH — no API key needed
 session_timeout_secs = 300
+greeting = "Hello, this is Morpheus"
 
 [api]
 # Secret loaded from .env (MORPHEUS_API_TOKEN)

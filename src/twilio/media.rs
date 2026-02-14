@@ -126,6 +126,16 @@ async fn handle_media_stream(mut socket: WebSocket, state: AppState) {
                             stream_sid = %stream_sid,
                             "Stream started"
                         );
+
+                        // Send greeting via TTS
+                        let tx = response_tx.clone();
+                        let sid = stream_sid.clone();
+                        let st = state.clone();
+                        tokio::spawn(async move {
+                            if let Err(e) = send_greeting(&sid, &st, &tx).await {
+                                tracing::error!("Failed to send greeting: {e}");
+                            }
+                        });
                     }
                     StreamEvent::Media { media, .. } => {
                         let mulaw_bytes = match base64::engine::general_purpose::STANDARD
@@ -251,6 +261,21 @@ async fn send_audio(
     tx.send(Message::Text(mark.to_string().into())).await?;
 
     Ok(())
+}
+
+/// Speak the configured greeting when a call connects.
+async fn send_greeting(
+    stream_sid: &str,
+    state: &AppState,
+    tx: &mpsc::Sender<Message>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let greeting = &state.config.claude.greeting;
+    if greeting.is_empty() {
+        return Ok(());
+    }
+    tracing::info!("Sending greeting");
+    let pcm_bytes = state.tts.synthesize(greeting).await?;
+    send_audio(stream_sid, &pcm_bytes, tx).await
 }
 
 /// Speak a fallback error message to the caller when the pipeline fails.

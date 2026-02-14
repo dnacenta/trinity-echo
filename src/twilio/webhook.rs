@@ -15,7 +15,6 @@ pub async fn handle_voice(State(state): State<AppState>) -> Response {
     let twiml = format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say>Connected to Claude. Go ahead and speak.</Say>
     <Connect>
         <Stream url="{ws_url}" />
     </Connect>
