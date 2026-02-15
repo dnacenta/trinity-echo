@@ -94,7 +94,7 @@ async fn handle_media_stream(mut socket: WebSocket, state: AppState) {
     let mut call_sid = String::new();
     let mut stream_sid = String::new();
 
-    // Suppress VAD while Morpheus is speaking (greeting or response).
+    // Suppress VAD while Trinity is speaking (greeting or response).
     // Set to true before send_audio, cleared on Twilio Mark event.
     let speaking = Arc::new(AtomicBool::new(false));
 
@@ -158,7 +158,7 @@ async fn handle_media_stream(mut socket: WebSocket, state: AppState) {
                             }
                         };
 
-                        // Suppress VAD while Morpheus is speaking
+                        // Suppress VAD while Trinity is speaking
                         if speaking.load(Ordering::Relaxed) {
                             continue;
                         }

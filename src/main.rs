@@ -35,7 +35,7 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "morpheus_line=info,tower_http=info".into()),
+                .unwrap_or_else(|_| "trinity_echo=info,tower_http=info".into()),
         )
         .init();
 
@@ -51,7 +51,7 @@ async fn main() {
     tracing::info!(
         host = %config.server.host,
         port = config.server.port,
-        "Starting morpheus-line"
+        "Starting trinity-echo"
     );
 
     // Load hold music if configured
