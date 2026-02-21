@@ -79,29 +79,6 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
                                          └───────────────┘
 ```
 
-## How It Works
-
-### Inbound calls
-
-1. Someone calls your Twilio number
-2. Twilio POSTs to `/twilio/voice` -- responds with TwiML that opens a media stream
-3. Twilio connects a WebSocket to `/twilio/media`
-4. Audio arrives as base64 mu-law chunks
-5. VAD (voice activity detection) buffers audio until it detects silence after speech
-6. Complete utterance is converted: mu-law -> PCM -> WAV -> Groq Whisper (STT)
-7. Transcript is sent to `claude -p` (Claude Code CLI)
-8. Response goes through ElevenLabs TTS -> PCM -> mu-law -> back through the WebSocket
-9. Caller hears Claude's response
-
-### Outbound calls
-
-1. POST to `/api/call` with a phone number and optional context
-2. trinity-echo calls Twilio REST API to initiate the call
-3. Context is stored per `call_sid` so Claude knows *why* it's calling
-4. When the recipient picks up, Twilio hits `/twilio/voice/outbound`
-5. Same media stream pipeline kicks in -- Claude's first prompt includes the context
-6. Context is consumed after first use, subsequent turns are normal conversation
-
 ## Prerequisites
 
 - [Rust](https://rustup.rs/) (1.75+)
@@ -122,70 +99,57 @@ cd trinity-echo
 cargo build --release
 ```
 
-The binary will be at `target/release/trinity-echo`.
-
-### 2. Configure
-
-Run the interactive setup wizard:
+### 2. Run the setup wizard
 
 ```bash
 ./target/release/trinity-echo --setup
 ```
 
-The wizard checks prerequisites, prompts for API keys (masked input), generates `~/.trinity-echo/config.toml` and `.env`, and optionally installs the systemd service and nginx config.
+The wizard walks you through the entire setup:
 
-**Manual setup** -- if you prefer to configure by hand:
+- Checks that `rustc`, `claude`, and `openssl` are available
+- Prompts for Twilio, Groq, and ElevenLabs credentials (masked input)
+- Asks for your server's external URL
+- Generates an API token for the outbound call endpoint
+- Writes `~/.trinity-echo/config.toml` and `.env` (secrets stored in `.env` with 0600 permissions)
+- Optionally copies the binary to `/usr/local/bin/`, installs a systemd service, and generates an nginx reverse proxy config
 
-```bash
-mkdir -p ~/.trinity-echo
-cp config.example.toml ~/.trinity-echo/config.toml
-cp .env.example ~/.trinity-echo/.env
-```
+If you skip the optional steps during the wizard, you can always set them up manually using the templates in `deploy/`.
 
-Edit `~/.trinity-echo/.env` with your API keys:
-
-```bash
-TWILIO_ACCOUNT_SID=AC...
-TWILIO_AUTH_TOKEN=your_token
-GROQ_API_KEY=gsk_...
-ELEVENLABS_API_KEY=your_key
-TRINITY_API_TOKEN=$(openssl rand -hex 32)
-SERVER_EXTERNAL_URL=https://your-server.example.com
-```
-
-Edit `~/.trinity-echo/config.toml` -- set your Twilio phone number and adjust defaults as needed. Secrets are loaded from `.env`, so leave them empty in the TOML.
-
-You can override the config directory with `TRINITY_ECHO_CONFIG=/path/to/config.toml`.
-
-### 3. nginx
-
-Copy `deploy/nginx.conf` and replace `your-server.example.com` with your domain:
-
-```bash
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/trinity-echo
-sudo ln -s /etc/nginx/sites-available/trinity-echo /etc/nginx/sites-enabled/
-# Edit server_name and SSL cert paths
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-TLS is required -- Twilio only sends webhooks over HTTPS. Use certbot or similar.
-
-### 4. systemd
-
-```bash
-sudo cp target/release/trinity-echo /usr/local/bin/
-sudo cp deploy/trinity-echo.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now trinity-echo
-```
-
-### 5. Twilio webhook
+### 3. Twilio webhook
 
 In the [Twilio Console](https://console.twilio.com/), set your phone number's voice webhook to:
 
 ```
 POST https://your-server.example.com/twilio/voice
 ```
+
+### 4. Start
+
+```bash
+trinity-echo
+```
+
+Or if you installed the systemd service:
+
+```bash
+sudo systemctl enable --now trinity-echo
+```
+
+### Manual configuration
+
+If you prefer to skip the wizard and configure by hand:
+
+```bash
+mkdir -p ~/.trinity-echo
+cp config.example.toml ~/.trinity-echo/config.toml
+cp .env.example ~/.trinity-echo/.env
+chmod 600 ~/.trinity-echo/.env
+```
+
+Edit `.env` with your API keys, and `config.toml` for your Twilio phone number and other settings. Secrets are loaded from `.env`, so leave them empty in the TOML. See `deploy/nginx.conf` and `deploy/trinity-echo.service` for server setup templates.
+
+You can override the config directory with `TRINITY_ECHO_CONFIG=/path/to/config.toml`.
 
 ## Configuration Reference
 
