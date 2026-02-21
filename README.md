@@ -64,6 +64,21 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
                                  └──────────────────┘
 ```
 
+### Full System
+
+```
+                     ┌──────────┐
+  ┌─────────┐        │   n8n    │        ┌───────────────┐
+  │ Triggers │──────►│ (Docker) │──────►│ trinity-echo  │──► Claude CLI
+  │ (cron,   │       │          │  API   │ (Rust, axum)  │
+  │  webhook,│       │  orchest.│        └───────┬───────┘
+  │  alerts, │       │  call-   │                │
+  │  events) │       │  human   │                ▼
+  └─────────┘        └──────────┘        ┌───────────────┐
+                                         │    Twilio      │◄──► Phone
+                                         └───────────────┘
+```
+
 ## How It Works
 
 ### Inbound calls
