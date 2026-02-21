@@ -27,16 +27,16 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
                          └─────────────────────────────────────┘
 ```
 
-### n8n Bridge — AI-Initiated Calls
+### AI-Initiated Outbound Calls (n8n Bridge)
 
 ```
   ┌──────────────┐    trigger     ┌──────────────────┐
-  │  Any module   │──────────────►│   Orchestrator    │
-  │  (slack,      │               │   reads registry, │
-  │   standup,    │               │   routes to       │
-  │   alerts...) │               │   target module   │
-  └──────────────┘               └────────┬─────────┘
-                                          │
+  │  Any n8n      │──────────────►│   Orchestrator    │
+  │  workflow     │               │   reads registry, │
+  │  (alerts,     │               │   routes to       │
+  │   cron,       │               │   target module   │
+  │   events...) │               └────────┬─────────┘
+  └──────────────┘                        │
                                           ▼
                                  ┌──────────────────┐
                                  │   call-human      │
@@ -67,22 +67,17 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
 ### Full System
 
 ```
-  ┌─────────┐        ┌──────────┐        ┌───────────────┐
-  │  Slack   │◄──────►│   n8n    │◄──────►│ claude-bridge │──► Claude CLI
-  └─────────┘        │ (Docker) │        └───────────────┘
-                     │          │
-  ┌─────────┐        │  modules:│        ┌───────────────┐
-  │ Triggers │──────►│  orchest.│──────►│ trinity-echo  │──► Claude CLI
-  │ (cron,   │       │  call-   │  API   │ (Rust, axum)  │
-  │  webhook,│       │  human,  │        └───────┬───────┘
-  │  events) │       │  slack,  │                │
-  └─────────┘        │  standup │                ▼
-                     └──────────┘        ┌───────────────┐
+                     ┌──────────┐
+  ┌─────────┐        │   n8n    │        ┌───────────────┐
+  │ Triggers │──────►│ (Docker) │──────►│ trinity-echo  │──► Claude CLI
+  │ (cron,   │       │          │  API   │ (Rust, axum)  │
+  │  webhook,│       │  orchest.│        └───────┬───────┘
+  │  alerts, │       │  call-   │                │
+  │  events) │       │  human   │                ▼
+  └─────────┘        └──────────┘        ┌───────────────┐
                                          │    Twilio      │◄──► Phone
                                          └───────────────┘
 ```
-
-Claude CLI is the brain, n8n is the nervous system, trinity-echo is the voice.
 
 ## How It Works
 
@@ -267,7 +262,7 @@ curl -X POST http://localhost:5678/webhook/orchestrator \
 
 The orchestrator reads the module registry, forwards the payload to the `call-human` webhook, which calls the trinity-echo API with context. When the user picks up, Claude knows exactly what's happening.
 
-Other modules (Slack chat, daily standup, agent reports) can also trigger calls by routing through the orchestrator. See `specs/n8n-bridge-spec.md` for the full specification.
+Any n8n workflow can trigger calls by routing through the orchestrator. See `specs/n8n-bridge-spec.md` for the full specification.
 
 ## Costs
 
