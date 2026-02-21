@@ -3,8 +3,11 @@ mod config;
 mod pipeline;
 mod twilio;
 
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
+
+use tokio::sync::Mutex;
 
 use axum::routing::{get, post};
 use axum::Router;
@@ -27,6 +30,9 @@ pub struct AppState {
     pub twilio: Arc<TwilioClient>,
     /// Pre-converted mu-law hold music data, if configured.
     pub hold_music: Option<Arc<Vec<u8>>>,
+    /// Context for outbound calls, keyed by call_sid.
+    /// Consumed on first utterance so Claude knows why it called.
+    pub call_contexts: Arc<Mutex<HashMap<String, String>>>,
 }
 
 #[tokio::main]
@@ -94,6 +100,7 @@ async fn main() {
         )),
         config: config.clone(),
         hold_music,
+        call_contexts: Arc::new(Mutex::new(HashMap::new())),
     };
 
     // Build router

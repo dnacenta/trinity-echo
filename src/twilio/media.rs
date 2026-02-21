@@ -287,7 +287,17 @@ async fn run_pipeline(
     tracing::info!(call_sid, transcript = %trimmed, "Transcribed");
 
     // 3. Text → Claude response
-    let response = state.claude.send(call_sid, &transcript).await?;
+    // On outbound calls with context, prepend it to the first transcript
+    let prompt = {
+        let mut contexts = state.call_contexts.lock().await;
+        if let Some(ctx) = contexts.remove(call_sid) {
+            tracing::info!(call_sid, "Injecting call context into first prompt");
+            format!("[Call context: {}]\n\nThe caller said: {}", ctx, trimmed)
+        } else {
+            trimmed.to_string()
+        }
+    };
+    let response = state.claude.send(call_sid, &prompt).await?;
     tracing::info!(call_sid, response_len = response.len(), "Claude response");
 
     // 4. Detect language and select voice
