@@ -1,7 +1,7 @@
 # trinity-echo
 
 [![CI](https://github.com/dnacenta/trinity-echo/actions/workflows/ci.yml/badge.svg?branch=development)](https://github.com/dnacenta/trinity-echo/actions/workflows/ci.yml)
-[![License: GPL-3.0](https://img.shields.io/github/license/dnacenta/trinity-echo)](LICENSE)
+[![License: MIT](https://img.shields.io/github/license/dnacenta/trinity-echo)](LICENSE)
 [![Version](https://img.shields.io/github/v/tag/dnacenta/trinity-echo?label=version&color=green)](https://github.com/dnacenta/trinity-echo/tags)
 [![Rust](https://img.shields.io/badge/rust-1.80%2B-orange)](https://rustup.rs/)
 
@@ -335,7 +335,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit conventions, an
 
 ## License
 
-[GPL-3.0](LICENSE)
+[MIT](LICENSE)
 
 ## Acknowledgments
 
