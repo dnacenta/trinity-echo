@@ -87,10 +87,22 @@ async fn handle_media_stream(mut socket: WebSocket, state: AppState) {
     // Channel for pipeline tasks to queue outbound messages
     let (response_tx, mut response_rx) = mpsc::channel::<Message>(64);
 
-    let mut vad = VoiceActivityDetector::new(
-        state.config.vad.energy_threshold,
-        state.config.vad.silence_threshold_ms,
-    );
+    let mut vad = {
+        let mut v = VoiceActivityDetector::new(
+            state.config.vad.energy_threshold,
+            state.config.vad.silence_threshold_ms,
+        );
+        if state.config.vad.adaptive_threshold {
+            v = v.with_adaptive(
+                state.config.vad.noise_floor_multiplier,
+                state.config.vad.noise_floor_decay,
+            );
+        }
+        if let Some(max_secs) = state.config.vad.max_utterance_secs {
+            v = v.with_max_utterance(max_secs);
+        }
+        v
+    };
     let mut call_sid = String::new();
     let mut stream_sid = String::new();
 
