@@ -130,7 +130,7 @@ async fn server() {
             config.claude.dangerously_skip_permissions,
             config
                 .claude
-                .soul_path
+                .self_path
                 .as_ref()
                 .map(std::path::PathBuf::from),
         )),

@@ -62,7 +62,7 @@ pub struct ClaudeConfig {
     #[serde(default)]
     pub dangerously_skip_permissions: bool,
     #[serde(default)]
-    pub soul_path: Option<String>,
+    pub self_path: Option<String>,
 }
 
 fn default_session_timeout() -> u64 {
