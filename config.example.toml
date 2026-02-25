@@ -25,14 +25,14 @@ voice_id = "EST9Ui6982FZPSi7gCHi"
 [claude]
 # Uses `claude` CLI from PATH — no API key needed
 session_timeout_secs = 300
-greeting = "Hello, this is Trinity"
+greeting = "Hello, this is Echo"
 # Allow claude CLI to run tools without permission prompts (use with caution)
 dangerously_skip_permissions = false
 # Path to self document injected as system prompt on every turn
 # self_path = "/path/to/SELF.md"
 
 [api]
-# Secret loaded from .env (TRINITY_API_TOKEN)
+# Secret loaded from .env (ECHO_API_TOKEN)
 token = ""
 
 [vad]

@@ -1,5 +1,5 @@
 [package]
-name = "trinity-echo"
+name = "voice-echo"
 version = "0.5.1"
 edition = "2021"
 rust-version = "1.80"

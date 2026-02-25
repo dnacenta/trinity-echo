@@ -34,7 +34,7 @@ Connect Claude Code to n8n so that Claude can programmatically create, manage, a
 
 ### Location
 
-`/root/projects/trinity-echo/n8n-bridge/registry.json`
+`/root/projects/voice-echo/n8n-bridge/registry.json`
 
 ### Schema
 
@@ -157,10 +157,10 @@ Claude Code uses two channels:
 
 ### How It Works
 
-Module workflows can trigger outbound calls through trinity-echo. The flow:
+Module workflows can trigger outbound calls through voice-echo. The flow:
 
 1. n8n module detects an event (schedule, webhook, threshold)
-2. Module calls trinity-echo's API or Twilio to initiate an outbound call
+2. Module calls voice-echo's API or Twilio to initiate an outbound call
 3. When Dani picks up, he's connected to Claude Code with full context about why it called
 
 ### Context Passing
@@ -170,12 +170,12 @@ When an AI-initiated call is triggered, the module passes context to Claude Code
 - The event data (what happened)
 - Suggested actions or information to relay
 
-*Details of the outbound call mechanism TBD — depends on trinity-echo's outbound support.*
+*Details of the outbound call mechanism TBD — depends on voice-echo's outbound support.*
 
 ## File Structure
 
 ```
-/root/projects/trinity-echo/
+/root/projects/voice-echo/
 ├── n8n-bridge/
 │   └── registry.json          # Module registry (symlinked via /local-files/)
 └── specs/
@@ -217,7 +217,7 @@ When an AI-initiated call is triggered, the module passes context to Claude Code
 
 ### Phase 3 — AI-Initiated Calls
 
-- Build outbound call capability (Twilio outbound via n8n or trinity-echo)
+- Build outbound call capability (Twilio outbound via n8n or voice-echo)
 - Create a generic "call Dani" module that accepts context and initiates a call
 - Other modules can trigger it when events occur
 - Claude Code receives context about why it's calling when the call connects
@@ -230,7 +230,7 @@ When an AI-initiated call is triggered, the module passes context to Claude Code
 
 ## Open Questions
 
-1. **Outbound calls**: trinity-echo currently handles inbound. What's the plan for outbound call initiation? Twilio API direct or through trinity-echo?
+1. **Outbound calls**: voice-echo currently handles inbound. What's the plan for outbound call initiation? Twilio API direct or through voice-echo?
 2. **Error handling**: When a module fails, should Claude Code be notified? Via what channel?
 3. **Rate limiting**: Should there be limits on how many workflows Claude Code can create?
 4. **Matrix Crew workflows**: The agent-runs workflow has errors in logs. Should it be fixed or deprecated?

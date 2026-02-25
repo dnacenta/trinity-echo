@@ -17,17 +17,17 @@ pub struct SetupValues {
     pub api_token: String,
 }
 
-/// Write config.toml and .env to ~/.trinity-echo/.
+/// Write config.toml and .env to ~/.voice-echo/.
 /// Returns the config directory path.
 pub fn write_config(values: &SetupValues) -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let config_dir = PathBuf::from(home).join(".trinity-echo");
+    let config_dir = PathBuf::from(home).join(".voice-echo");
 
     println!("\n  {} Writing configuration", ansi::bold(">>"));
 
     // Create directory if needed
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir).expect("Failed to create ~/.trinity-echo");
+        fs::create_dir_all(&config_dir).expect("Failed to create ~/.voice-echo");
     }
 
     // Write config.toml
@@ -85,11 +85,11 @@ voice_id = "{voice_id}"
 
 [claude]
 session_timeout_secs = 300
-greeting = "Hello, this is Trinity"
+greeting = "Hello, this is Echo"
 dangerously_skip_permissions = false
 
 [api]
-# Secret loaded from .env (TRINITY_API_TOKEN)
+# Secret loaded from .env (ECHO_API_TOKEN)
 token = ""
 
 [vad]
@@ -121,7 +121,7 @@ GROQ_API_KEY={groq_key}
 ELEVENLABS_API_KEY={elevenlabs_key}
 
 # API bearer token for /api/* endpoints
-TRINITY_API_TOKEN={api_token}
+ECHO_API_TOKEN={api_token}
 
 # Public URL where Twilio can reach this server
 SERVER_EXTERNAL_URL={external_url}
@@ -148,10 +148,10 @@ SERVER_EXTERNAL_URL={external_url}
     );
 }
 
-/// Copy the current binary to /usr/local/bin/trinity-echo.
+/// Copy the current binary to /usr/local/bin/voice-echo.
 pub fn install_binary() {
     let current_exe = std::env::current_exe().expect("Failed to get current executable path");
-    let target = Path::new("/usr/local/bin/trinity-echo");
+    let target = Path::new("/usr/local/bin/voice-echo");
 
     match fs::copy(&current_exe, target) {
         Ok(_) => {
@@ -177,14 +177,14 @@ pub fn install_binary() {
 /// Write a systemd service unit to /etc/systemd/system/.
 pub fn install_systemd() {
     let unit = r#"[Unit]
-Description=trinity-echo — Voice interface for Claude Code
+Description=voice-echo — Voice interface for Claude Code
 After=network.target
 
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/trinity-echo
-Environment=RUST_LOG=trinity_echo=info,tower_http=info
+ExecStart=/usr/local/bin/voice-echo
+Environment=RUST_LOG=voice_echo=info,tower_http=info
 Restart=on-failure
 RestartSec=5
 
@@ -192,13 +192,13 @@ RestartSec=5
 WantedBy=multi-user.target
 "#;
 
-    let path = Path::new("/etc/systemd/system/trinity-echo.service");
+    let path = Path::new("/etc/systemd/system/voice-echo.service");
     match fs::write(path, unit) {
         Ok(_) => {
             println!("  {} {}", ansi::green("\u{2713}"), path.display());
             println!(
                 "  {}",
-                ansi::dim("Run: systemctl daemon-reload && systemctl enable --now trinity-echo")
+                ansi::dim("Run: systemctl daemon-reload && systemctl enable --now voice-echo")
             );
         }
         Err(e) => {
@@ -274,14 +274,14 @@ server {{
         domain = domain,
     );
 
-    let path = Path::new("/etc/nginx/sites-available/trinity-echo");
+    let path = Path::new("/etc/nginx/sites-available/voice-echo");
 
     match fs::write(path, &config) {
         Ok(_) => {
             println!("  {} {}", ansi::green("\u{2713}"), path.display());
             println!(
                 "  {}",
-                ansi::dim("Run: ln -sf /etc/nginx/sites-available/trinity-echo /etc/nginx/sites-enabled/ && nginx -t && systemctl reload nginx")
+                ansi::dim("Run: ln -sf /etc/nginx/sites-available/voice-echo /etc/nginx/sites-enabled/ && nginx -t && systemctl reload nginx")
             );
         }
         Err(e) => {

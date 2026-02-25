@@ -9,7 +9,7 @@ use rand::Rng;
 
 use writer::SetupValues;
 
-/// Entry point for `trinity-echo --setup`.
+/// Entry point for `voice-echo --setup`.
 pub fn run() {
     if !std::io::stdin().is_terminal() {
         eprintln!("Error: --setup requires an interactive terminal");
@@ -17,7 +17,7 @@ pub fn run() {
     }
 
     println!();
-    println!("  {}", ansi::bold("trinity-echo setup"));
+    println!("  {}", ansi::bold("voice-echo setup"));
     println!("  {}", ansi::dim("Interactive configuration wizard"));
 
     // Prerequisite checks
@@ -55,10 +55,7 @@ pub fn run() {
 
     // Generate API token
     let api_token = generate_hex_token(32);
-    println!(
-        "\n  {} Generated TRINITY_API_TOKEN",
-        ansi::green("\u{2713}")
-    );
+    println!("\n  {} Generated ECHO_API_TOKEN", ansi::green("\u{2713}"));
 
     // Write config files
     let values = SetupValues {
@@ -93,8 +90,8 @@ pub fn run() {
     println!("\n  {} Setup complete!", ansi::green("\u{2713}"));
     println!();
     println!("  Next steps:");
-    println!("    1. Review ~/.trinity-echo/config.toml");
-    println!("    2. Run: trinity-echo");
+    println!("    1. Review ~/.voice-echo/config.toml");
+    println!("    2. Run: voice-echo");
     println!(
         "    3. Set Twilio voice webhook to {}/twilio/voice",
         external_url

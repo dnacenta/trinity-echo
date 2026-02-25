@@ -70,7 +70,7 @@ fn default_session_timeout() -> u64 {
 }
 
 fn default_greeting() -> String {
-    "Hello, this is Trinity".to_string()
+    "Hello, this is Echo".to_string()
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -165,7 +165,7 @@ impl Config {
         if let Ok(v) = std::env::var("ELEVENLABS_API_KEY") {
             config.elevenlabs.api_key = v;
         }
-        if let Ok(v) = std::env::var("TRINITY_API_TOKEN") {
+        if let Ok(v) = std::env::var("ECHO_API_TOKEN") {
             config.api.token = v;
         }
         if let Ok(v) = std::env::var("SERVER_EXTERNAL_URL") {
@@ -177,18 +177,18 @@ impl Config {
 }
 
 fn config_dir() -> PathBuf {
-    if let Ok(p) = std::env::var("TRINITY_ECHO_CONFIG") {
+    if let Ok(p) = std::env::var("ECHO_CONFIG") {
         // If pointing to a file, use its parent directory
         let path = PathBuf::from(p);
         return path.parent().map(|p| p.to_path_buf()).unwrap_or(path);
     }
 
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".trinity-echo")
+    PathBuf::from(home).join(".voice-echo")
 }
 
 fn config_path() -> PathBuf {
-    if let Ok(p) = std::env::var("TRINITY_ECHO_CONFIG") {
+    if let Ok(p) = std::env::var("ECHO_CONFIG") {
         return PathBuf::from(p);
     }
 
