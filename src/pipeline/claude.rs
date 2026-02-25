@@ -9,7 +9,7 @@ pub struct ClaudeBridge {
     sessions: Arc<Mutex<HashMap<String, Session>>>,
     session_timeout: Duration,
     dangerously_skip_permissions: bool,
-    soul_path: Option<std::path::PathBuf>,
+    self_path: Option<std::path::PathBuf>,
 }
 
 struct Session {
@@ -21,13 +21,13 @@ impl ClaudeBridge {
     pub fn new(
         session_timeout_secs: u64,
         dangerously_skip_permissions: bool,
-        soul_path: Option<std::path::PathBuf>,
+        self_path: Option<std::path::PathBuf>,
     ) -> Self {
         Self {
             sessions: Arc::new(Mutex::new(HashMap::new())),
             session_timeout: Duration::from_secs(session_timeout_secs),
             dangerously_skip_permissions,
-            soul_path,
+            self_path,
         }
     }
 
@@ -55,8 +55,8 @@ impl ClaudeBridge {
             cmd.arg("--dangerously-skip-permissions");
         }
 
-        // Inject soul document if configured
-        if let Some(ref path) = self.soul_path {
+        // Inject self document if configured
+        if let Some(ref path) = self.self_path {
             if let Ok(contents) = std::fs::read_to_string(path) {
                 cmd.arg("--append-system-prompt").arg(contents);
             }
