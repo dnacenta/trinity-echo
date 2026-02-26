@@ -15,24 +15,23 @@ phone_number = "+1..."
 api_key = ""
 model = "whisper-large-v3-turbo"
 
-[elevenlabs]
-# Secret loaded from .env (ELEVENLABS_API_KEY)
+[inworld]
+# Secret loaded from .env (INWORLD_API_KEY)
 api_key = ""
-voice_id = "EST9Ui6982FZPSi7gCHi"
-# Optional: voice ID for Spanish responses (auto-detected via language detection)
-# spanish_voice_id = "avokGQLR6UbUx9DZNelE"
+voice_id = "Olivia"
+model = "inworld-tts-1.5-max"
 
 [claude]
 # Uses `claude` CLI from PATH — no API key needed
 session_timeout_secs = 300
-greeting = "Hello, this is Trinity"
+greeting = "Hello, this is Echo"
 # Allow claude CLI to run tools without permission prompts (use with caution)
 dangerously_skip_permissions = false
-# Path to soul document injected as system prompt on every turn
-# soul_path = "/path/to/SOUL.md"
+# Path to self document injected as system prompt on every turn
+# self_path = "/path/to/SELF.md"
 
 [api]
-# Secret loaded from .env (TRINITY_API_TOKEN)
+# Secret loaded from .env (ECHO_API_TOKEN)
 token = ""
 
 [vad]

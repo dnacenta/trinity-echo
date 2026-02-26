@@ -1,0 +1,14 @@
+[Unit]
+Description=voice-echo — Voice interface for Claude Code
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/voice-echo
+Environment=RUST_LOG=voice_echo=info,tower_http=info
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

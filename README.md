@@ -1,8 +1,8 @@
-# trinity-echo
+# voice-echo
 
-[![CI](https://github.com/dnacenta/trinity-echo/actions/workflows/ci.yml/badge.svg?branch=development)](https://github.com/dnacenta/trinity-echo/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/github/license/dnacenta/trinity-echo)](LICENSE)
-[![Version](https://img.shields.io/github/v/tag/dnacenta/trinity-echo?label=version&color=green)](https://github.com/dnacenta/trinity-echo/tags)
+[![CI](https://github.com/dnacenta/voice-echo/actions/workflows/ci.yml/badge.svg?branch=development)](https://github.com/dnacenta/voice-echo/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/dnacenta/voice-echo)](LICENSE)
+[![Version](https://img.shields.io/github/v/tag/dnacenta/voice-echo?label=version&color=green)](https://github.com/dnacenta/voice-echo/tags)
 [![Rust](https://img.shields.io/badge/rust-1.80%2B-orange)](https://rustup.rs/)
 
 Voice interface for Claude Code over the phone. Call in and talk to Claude, or trigger outbound calls from n8n / automation workflows.
@@ -15,7 +15,7 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
 
 ```
                          ┌─────────────────────────────────────┐
-                         │          trinity-echo (axum)        │
+                         │          voice-echo (axum)        │
                          │                                     │
   Phone ◄──► Twilio ◄──►│  WebSocket ◄──► VAD ──► STT (Groq)  │
                          │                         │           │
@@ -48,7 +48,7 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
                                           │ { to, context }
                                           ▼
                                  ┌──────────────────┐
-                                 │  trinity-echo     │
+                                 │  voice-echo     │
                                  │  stores context   │──► Twilio ──► Phone rings
                                  │  per call_sid     │
                                  └────────┬─────────┘
@@ -69,7 +69,7 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
 ```
                      ┌──────────┐
   ┌─────────┐        │   n8n    │        ┌───────────────┐
-  │ Triggers │──────►│ (Docker) │──────►│ trinity-echo  │──► Claude CLI
+  │ Triggers │──────►│ (Docker) │──────►│ voice-echo  │──► Claude CLI
   │ (cron,   │       │          │  API   │ (Rust, axum)  │
   │  webhook,│       │  orchest.│        └───────┬───────┘
   │  alerts, │       │  call-   │                │
@@ -94,15 +94,15 @@ Built in Rust. Uses Twilio for telephony, Groq Whisper for speech-to-text, Eleve
 ### 1. Clone and build
 
 ```bash
-git clone https://github.com/dnacenta/trinity-echo.git
-cd trinity-echo
+git clone https://github.com/dnacenta/voice-echo.git
+cd voice-echo
 cargo build --release
 ```
 
 ### 2. Run the setup wizard
 
 ```bash
-./target/release/trinity-echo --setup
+./target/release/voice-echo --setup
 ```
 
 The wizard walks you through the entire setup:
@@ -111,7 +111,7 @@ The wizard walks you through the entire setup:
 - Prompts for Twilio, Groq, and ElevenLabs credentials (masked input)
 - Asks for your server's external URL
 - Generates an API token for the outbound call endpoint
-- Writes `~/.trinity-echo/config.toml`
+- Writes `~/.voice-echo/config.toml`
 - Optionally copies the binary to `/usr/local/bin/`, installs a systemd service, and generates an nginx reverse proxy config
 
 If you skip the optional steps during the wizard, you can always set them up manually using the templates in `deploy/`.
@@ -127,13 +127,13 @@ POST https://your-server.example.com/twilio/voice
 ### 4. Start
 
 ```bash
-trinity-echo
+voice-echo
 ```
 
 Or if you installed the systemd service:
 
 ```bash
-sudo systemctl enable --now trinity-echo
+sudo systemctl enable --now voice-echo
 ```
 
 ### Manual configuration
@@ -141,15 +141,15 @@ sudo systemctl enable --now trinity-echo
 If you prefer to skip the wizard and configure by hand:
 
 ```bash
-mkdir -p ~/.trinity-echo
-cp config.example.toml ~/.trinity-echo/config.toml
-cp .env.example ~/.trinity-echo/.env
-chmod 600 ~/.trinity-echo/.env
+mkdir -p ~/.voice-echo
+cp config.example.toml ~/.voice-echo/config.toml
+cp .env.example ~/.voice-echo/.env
+chmod 600 ~/.voice-echo/.env
 ```
 
-Edit `.env` with your API keys, and `config.toml` for your Twilio phone number and other settings. Secrets are loaded from `.env`, so leave them empty in the TOML. See `deploy/nginx.conf` and `deploy/trinity-echo.service` for server setup templates.
+Edit `.env` with your API keys, and `config.toml` for your Twilio phone number and other settings. Secrets are loaded from `.env`, so leave them empty in the TOML. See `deploy/nginx.conf` and `deploy/voice-echo.service` for server setup templates.
 
-You can override the config directory with `TRINITY_ECHO_CONFIG=/path/to/config.toml`.
+You can override the config directory with `ECHO_CONFIG=/path/to/config.toml`.
 
 ## Configuration Reference
 
@@ -169,7 +169,7 @@ You can override the config directory with `TRINITY_ECHO_CONFIG=/path/to/config.
 | `elevenlabs`  | `voice_id`             | `EST9Ui6982FZPSi7gCHi`   | ElevenLabs voice ID                              |
 | `elevenlabs`  | `spanish_voice_id`     | --                        | Optional voice ID for Spanish (auto-detected)    |
 | `claude`      | `session_timeout_secs` | `300`                     | Conversation session timeout                     |
-| `claude`      | `greeting`             | `Hello, this is Trinity`  | Initial TTS greeting when a call connects        |
+| `claude`      | `greeting`             | `Hello, this is Echo`  | Initial TTS greeting when a call connects        |
 | `claude`      | `dangerously_skip_permissions` | `false`           | Allow Claude CLI to run tools without prompting (see [Customizing Claude](#customizing-claude)) |
 | `api`         | `token`                | --                        | Bearer token for `/api/*` (overridden by env var)|
 | `vad`         | `silence_threshold_ms` | `1500`                    | Silence duration before utterance ends           |
@@ -187,16 +187,16 @@ All secrets can be set via env vars (recommended) instead of config.toml:
 | `TWILIO_AUTH_TOKEN`    | `twilio.auth_token`        |
 | `GROQ_API_KEY`         | `groq.api_key`             |
 | `ELEVENLABS_API_KEY`   | `elevenlabs.api_key`       |
-| `TRINITY_API_TOKEN`   | `api.token`                |
+| `ECHO_API_TOKEN`   | `api.token`                |
 | `SERVER_EXTERNAL_URL`  | `server.external_url`      |
-| `TRINITY_ECHO_CONFIG` | Config file path            |
-| `RUST_LOG`             | Log level filter (e.g. `trinity_echo=debug,tower_http=debug`) |
+| `ECHO_CONFIG` | Config file path            |
+| `RUST_LOG`             | Log level filter (e.g. `voice_echo=debug,tower_http=debug`) |
 
 ## Customizing Claude
 
-trinity-echo spawns the `claude` CLI for each conversation. Claude Code reads a `CLAUDE.md` file from the working directory to set its behavior — this is how you turn generic Claude into your personalized voice assistant.
+voice-echo spawns the `claude` CLI for each conversation. Claude Code reads a `CLAUDE.md` file from the working directory to set its behavior — this is how you turn generic Claude into your personalized voice assistant.
 
-Create a `CLAUDE.md` in the directory where trinity-echo runs (typically the project root or the home directory of the service user). This file should contain instructions tailored for a voice context:
+Create a `CLAUDE.md` in the directory where voice-echo runs (typically the project root or the home directory of the service user). This file should contain instructions tailored for a voice context:
 
 - **Persona**: Define who Claude is on the phone — name, tone, personality.
 - **Voice-first rules**: Tell Claude to never use markdown, bullet points, numbered lists, or any text formatting. Everything it outputs will be spoken aloud via TTS.
@@ -231,13 +231,13 @@ Certificates auto-renew via a systemd timer. The nginx template in `deploy/nginx
 
 ### systemd
 
-The included service file (`deploy/trinity-echo.service`) runs as root for simplicity. For production, consider creating a dedicated user:
+The included service file (`deploy/voice-echo.service`) runs as root for simplicity. For production, consider creating a dedicated user:
 
 ```bash
-sudo useradd -r -s /usr/sbin/nologin trinity-echo
+sudo useradd -r -s /usr/sbin/nologin voice-echo
 ```
 
-Then update `User=trinity-echo` in the service file and ensure the user has read access to `~/.trinity-echo/` and the `claude` CLI.
+Then update `User=voice-echo` in the service file and ensure the user has read access to `~/.voice-echo/` and the `claude` CLI.
 
 ## Usage
 
@@ -271,7 +271,7 @@ Requires `Authorization: Bearer <token>` header.
 
 ### n8n Bridge
 
-trinity-echo integrates with n8n through a bridge architecture:
+voice-echo integrates with n8n through a bridge architecture:
 
 - **Orchestrator** -- central webhook that routes triggers to registered modules
 - **Modules** -- individual workflows managed via a JSON registry
@@ -294,7 +294,7 @@ curl -X POST http://localhost:5678/webhook/orchestrator \
   }'
 ```
 
-The orchestrator reads the module registry, forwards the payload to the `call-human` webhook, which calls the trinity-echo API with context. When the user picks up, Claude knows exactly what's happening.
+The orchestrator reads the module registry, forwards the payload to the `call-human` webhook, which calls the voice-echo API with context. When the user picks up, Claude knows exactly what's happening.
 
 Any n8n workflow can trigger calls by routing through the orchestrator. See `specs/n8n-bridge-spec.md` for the full specification.
 
@@ -318,13 +318,13 @@ Twilio can't reach your server. Verify nginx is running, your DNS points to the 
 Check that nginx has WebSocket proxying enabled (the `Upgrade` and `Connection` headers in `deploy/nginx.conf`). Also check `proxy_read_timeout` — Twilio media streams are long-lived.
 
 **"Failed to load config" on startup**
-The config file is missing or malformed. Run `trinity-echo --setup` to generate it, or manually copy `config.example.toml` to `~/.trinity-echo/config.toml`.
+The config file is missing or malformed. Run `voice-echo --setup` to generate it, or manually copy `config.example.toml` to `~/.voice-echo/config.toml`.
 
 **Claude doesn't respond or times out**
 Make sure the `claude` CLI is installed, in `PATH`, and authenticated. Run `claude --version` and `claude "hello"` manually to verify. If running as a systemd service, ensure the service user's `PATH` includes the Claude binary.
 
 **No audio / silence after speaking**
-The VAD energy threshold may be too high for your microphone or phone quality. Lower `vad.energy_threshold` (try `30` or `20`). Check `RUST_LOG=trinity_echo=debug` for VAD activity logs.
+The VAD energy threshold may be too high for your microphone or phone quality. Lower `vad.energy_threshold` (try `30` or `20`). Check `RUST_LOG=voice_echo=debug` for VAD activity logs.
 
 **TTS sounds robotic or uses the wrong voice**
 Verify your `elevenlabs.voice_id` is valid. You can list voices with the [ElevenLabs API](https://api.elevenlabs.io/v1/voices). Free-tier voices have lower quality than paid.

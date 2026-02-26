@@ -6,7 +6,7 @@ pub struct Config {
     pub server: ServerConfig,
     pub twilio: TwilioConfig,
     pub groq: GroqConfig,
-    pub elevenlabs: ElevenLabsConfig,
+    pub inworld: InworldConfig,
     pub claude: ClaudeConfig,
     pub vad: VadConfig,
     #[serde(default)]
@@ -41,16 +41,20 @@ fn default_groq_model() -> String {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct ElevenLabsConfig {
+pub struct InworldConfig {
     pub api_key: String,
     #[serde(default = "default_voice_id")]
     pub voice_id: String,
-    #[serde(default)]
-    pub spanish_voice_id: Option<String>,
+    #[serde(default = "default_inworld_model")]
+    pub model: String,
 }
 
 fn default_voice_id() -> String {
-    "EST9Ui6982FZPSi7gCHi".to_string()
+    "Olivia".to_string()
+}
+
+fn default_inworld_model() -> String {
+    "inworld-tts-1.5-max".to_string()
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -62,7 +66,7 @@ pub struct ClaudeConfig {
     #[serde(default)]
     pub dangerously_skip_permissions: bool,
     #[serde(default)]
-    pub soul_path: Option<String>,
+    pub self_path: Option<String>,
 }
 
 fn default_session_timeout() -> u64 {
@@ -70,7 +74,7 @@ fn default_session_timeout() -> u64 {
 }
 
 fn default_greeting() -> String {
-    "Hello, this is Trinity".to_string()
+    "Hello, this is Echo".to_string()
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -162,10 +166,10 @@ impl Config {
         if let Ok(v) = std::env::var("GROQ_API_KEY") {
             config.groq.api_key = v;
         }
-        if let Ok(v) = std::env::var("ELEVENLABS_API_KEY") {
-            config.elevenlabs.api_key = v;
+        if let Ok(v) = std::env::var("INWORLD_API_KEY") {
+            config.inworld.api_key = v;
         }
-        if let Ok(v) = std::env::var("TRINITY_API_TOKEN") {
+        if let Ok(v) = std::env::var("ECHO_API_TOKEN") {
             config.api.token = v;
         }
         if let Ok(v) = std::env::var("SERVER_EXTERNAL_URL") {
@@ -177,18 +181,18 @@ impl Config {
 }
 
 fn config_dir() -> PathBuf {
-    if let Ok(p) = std::env::var("TRINITY_ECHO_CONFIG") {
+    if let Ok(p) = std::env::var("ECHO_CONFIG") {
         // If pointing to a file, use its parent directory
         let path = PathBuf::from(p);
         return path.parent().map(|p| p.to_path_buf()).unwrap_or(path);
     }
 
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".trinity-echo")
+    PathBuf::from(home).join(".voice-echo")
 }
 
 fn config_path() -> PathBuf {
-    if let Ok(p) = std::env::var("TRINITY_ECHO_CONFIG") {
+    if let Ok(p) = std::env::var("ECHO_CONFIG") {
         return PathBuf::from(p);
     }
 

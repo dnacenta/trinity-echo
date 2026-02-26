@@ -43,7 +43,7 @@ fn main() {
 
     match args.get(1).map(|s| s.as_str()) {
         Some("--setup") => setup::run(),
-        Some("--version") => println!("trinity-echo {VERSION}"),
+        Some("--version") => println!("voice-echo {VERSION}"),
         Some("--help") | Some("-h") => print_usage(),
         Some(other) => {
             eprintln!("Unknown option: {other}");
@@ -58,10 +58,10 @@ fn main() {
 }
 
 fn print_usage() {
-    println!("trinity-echo {VERSION}");
+    println!("voice-echo {VERSION}");
     println!("Voice interface for Claude Code via Twilio");
     println!();
-    println!("Usage: trinity-echo [OPTIONS]");
+    println!("Usage: voice-echo [OPTIONS]");
     println!();
     println!("Options:");
     println!("  --setup     Run interactive configuration wizard");
@@ -76,7 +76,7 @@ async fn server() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "trinity_echo=info,tower_http=info".into()),
+                .unwrap_or_else(|_| "voice_echo=info,tower_http=info".into()),
         )
         .init();
 
@@ -92,7 +92,7 @@ async fn server() {
     tracing::info!(
         host = %config.server.host,
         port = config.server.port,
-        "Starting trinity-echo"
+        "Starting voice-echo"
     );
 
     // Load hold music if configured
@@ -122,15 +122,16 @@ async fn server() {
             config.groq.model.clone(),
         )),
         tts: Arc::new(TtsClient::new(
-            config.elevenlabs.api_key.clone(),
-            config.elevenlabs.voice_id.clone(),
+            config.inworld.api_key.clone(),
+            config.inworld.voice_id.clone(),
+            config.inworld.model.clone(),
         )),
         claude: Arc::new(ClaudeBridge::new(
             config.claude.session_timeout_secs,
             config.claude.dangerously_skip_permissions,
             config
                 .claude
-                .soul_path
+                .self_path
                 .as_ref()
                 .map(std::path::PathBuf::from),
         )),
