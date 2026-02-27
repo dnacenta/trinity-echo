@@ -8,7 +8,7 @@ use base64::Engine;
 use serde::Deserialize;
 use tokio::sync::mpsc;
 
-use crate::pipeline::{audio, vad::VoiceActivityDetector};
+use crate::pipeline::{audio, notify, vad::VoiceActivityDetector};
 use crate::registry::Transport;
 use crate::{AppState, Brain};
 
@@ -78,6 +78,8 @@ async fn handle_discord_stream(mut socket: WebSocket, state: AppState) {
 
     let mut call_sid = String::new();
     let speaking = Arc::new(AtomicBool::new(false));
+    let mut audio_frame_count: u64 = 0;
+    let mut vad_feed_count: u64 = 0;
 
     loop {
         tokio::select! {
@@ -128,6 +130,16 @@ async fn handle_discord_stream(mut socket: WebSocket, state: AppState) {
                             Arc::clone(&speaking),
                         ).await;
 
+                        // Notify bridge-echo so it can route text messages to voice
+                        if let Some(ref bridge_url) = state.config.claude.bridge_url {
+                            let url = bridge_url.clone();
+                            let csid = call_sid.clone();
+                            let sender = state.config.identity.caller_name.clone();
+                            tokio::spawn(async move {
+                                notify::notify_session_started(&url, &csid, &sender, "discord").await;
+                            });
+                        }
+
                         // Send greeting
                         let tx = response_tx.clone();
                         let st = state.clone();
@@ -150,9 +162,28 @@ async fn handle_discord_stream(mut socket: WebSocket, state: AppState) {
                             }
                         };
 
+                        audio_frame_count += 1;
+
                         // Suppress VAD while Echo is speaking
                         if speaking.load(Ordering::Relaxed) {
+                            if audio_frame_count % 50 == 1 {
+                                tracing::info!(
+                                    call_sid = %call_sid,
+                                    frames = audio_frame_count,
+                                    "Audio suppressed (speaking=true)"
+                                );
+                            }
                             continue;
+                        }
+
+                        vad_feed_count += 1;
+                        if vad_feed_count == 1 || vad_feed_count % 250 == 0 {
+                            tracing::info!(
+                                call_sid = %call_sid,
+                                mulaw_bytes = mulaw_bytes.len(),
+                                vad_feeds = vad_feed_count,
+                                "Feeding audio to VAD"
+                            );
                         }
 
                         if let Some(pcm_utterance) = vad.feed(&mulaw_bytes) {
@@ -184,7 +215,7 @@ async fn handle_discord_stream(mut socket: WebSocket, state: AppState) {
                     }
 
                     DiscordEvent::Mark => {
-                        tracing::debug!("Discord mark received, resuming VAD");
+                        tracing::info!("Discord mark received, resuming VAD");
                         speaking.store(false, Ordering::Relaxed);
                         vad.reset();
                     }
@@ -201,7 +232,7 @@ async fn handle_discord_stream(mut socket: WebSocket, state: AppState) {
                             claude.end_session(&call_sid).await;
                         }
                         if let Some(ref url) = state.config.claude.bridge_url {
-                            notify_call_ended(url, &call_sid).await;
+                            notify::notify_call_ended(url, &call_sid).await;
                         }
                         break;
                     }
@@ -229,14 +260,44 @@ async fn process_utterance(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     speaking.store(true, Ordering::Relaxed);
 
-    // No hold music for Discord (lower latency path)
-    let result = run_pipeline(pcm_data, call_sid, state).await;
+    // Start hold music on discord-voice while pipeline processes
+    let has_hold_music = state.hold_music.is_some();
+    if has_hold_music {
+        let hold_start = serde_json::json!({ "type": "hold_start" });
+        tx.send(Message::Text(hold_start.to_string().into()))
+            .await?;
+    }
 
-    if let Some(tts_mulaw) = result? {
-        // speaking stays true — mark event from discord-voice will reset it
-        send_audio(&tts_mulaw, tx).await?;
-    } else {
-        speaking.store(false, Ordering::Relaxed);
+    // Run pipeline with timeout to prevent indefinite hold music
+    let result = tokio::time::timeout(
+        std::time::Duration::from_secs(45),
+        run_pipeline(pcm_data, call_sid, state),
+    )
+    .await;
+
+    // Stop hold music before sending response (or on timeout/error)
+    if has_hold_music {
+        let hold_stop = serde_json::json!({ "type": "hold_stop" });
+        tx.send(Message::Text(hold_stop.to_string().into())).await?;
+    }
+
+    match result {
+        Ok(Ok(Some(tts_mulaw))) => {
+            // speaking stays true — mark event from discord-voice will reset it
+            send_audio(&tts_mulaw, tx).await?;
+        }
+        Ok(Ok(None)) => {
+            // No audio to send (empty transcript / hallucination)
+            speaking.store(false, Ordering::Relaxed);
+        }
+        Ok(Err(e)) => {
+            speaking.store(false, Ordering::Relaxed);
+            return Err(e);
+        }
+        Err(_) => {
+            tracing::warn!(call_sid, "Discord pipeline timed out after 45s");
+            speaking.store(false, Ordering::Relaxed);
+        }
     }
 
     Ok(())
@@ -268,11 +329,7 @@ async fn run_pipeline(
     let call_context = call_meta.as_ref().and_then(|m| m.context.as_deref());
 
     let response = match &state.brain {
-        Brain::Bridge(bridge) => {
-            bridge
-                .send(call_sid, trimmed, call_context)
-                .await?
-        }
+        Brain::Bridge(bridge) => bridge.send(call_sid, trimmed, call_context).await?,
         Brain::Local(claude) => {
             let prompt = build_prompt(trimmed, call_context);
             claude.send(call_sid, &prompt).await?
@@ -384,32 +441,6 @@ async fn send_error_message(
         Err(e) => {
             tracing::error!("TTS unavailable for error message: {e}");
             Ok(())
-        }
-    }
-}
-
-/// Notify bridge-echo that a Discord voice session ended.
-async fn notify_call_ended(bridge_url: &str, call_sid: &str) {
-    let url = format!("{}/call-ended", bridge_url.trim_end_matches('/'));
-    let client = reqwest::Client::new();
-    match client
-        .post(&url)
-        .json(&serde_json::json!({ "call_sid": call_sid }))
-        .send()
-        .await
-    {
-        Ok(resp) if resp.status().is_success() => {
-            tracing::debug!(call_sid, "Notified bridge-echo of Discord session end");
-        }
-        Ok(resp) => {
-            tracing::warn!(
-                call_sid,
-                status = %resp.status(),
-                "bridge-echo call-ended notification returned error"
-            );
-        }
-        Err(e) => {
-            tracing::warn!(call_sid, "Failed to notify bridge-echo of session end: {e}");
         }
     }
 }
