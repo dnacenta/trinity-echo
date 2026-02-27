@@ -168,8 +168,11 @@ You can override the config directory with `ECHO_CONFIG=/path/to/config.toml`.
 | `inworld`     | `voice_id`             | `Olivia`                  | Inworld voice name                               |
 | `inworld`     | `model`                | `inworld-tts-1.5-max`    | Inworld TTS model                                |
 | `claude`      | `session_timeout_secs` | `300`                     | Conversation session timeout                     |
-| `claude`      | `greeting`             | `Hello, this is Echo`  | Initial TTS greeting when a call connects        |
+| `claude`      | `greeting`             | `Hello, this is Echo`  | Initial TTS greeting when a call connects (legacy — see `greetings` section) |
 | `claude`      | `dangerously_skip_permissions` | `false`           | Allow Claude CLI to run tools without prompting (see [Customizing Claude](#customizing-claude)) |
+| `greetings`   | `inbound`              | `["Hello, this is Echo..."]` | Array of inbound greeting templates (one chosen randomly per call) |
+| `greetings`   | `outbound_template`    | `"Hey, it's Echo..."`  | Greeting template for outbound calls (supports `{reason}` placeholder) |
+| `greetings`   | `outbound_fallback`    | `"Hey, it's Echo..."`  | Fallback greeting when no context is provided    |
 | `api`         | `token`                | --                        | Bearer token for `/api/*` (overridden by env var)|
 | `vad`         | `silence_threshold_ms` | `1500`                    | Silence duration before utterance ends           |
 | `vad`         | `energy_threshold`     | `50`                      | Minimum RMS energy to detect speech              |
@@ -237,6 +240,15 @@ sudo useradd -r -s /usr/sbin/nologin voice-echo
 ```
 
 Then update `User=voice-echo` in the service file and ensure the user has read access to `~/.voice-echo/` and the `claude` CLI.
+
+## API Routes
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/twilio/voice` | Twilio signature | Inbound call webhook — generates TwiML to start media stream |
+| `POST` | `/twilio/voice/outbound` | Twilio signature | Outbound call webhook — same as inbound but for AI-initiated calls |
+| `POST` | `/api/call` | Bearer token | Trigger an outbound call with optional context |
+| `GET`  | `/health` | None | Health check — returns `200 OK` |
 
 ## Usage
 
